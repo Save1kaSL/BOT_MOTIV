@@ -1,5 +1,6 @@
 from aiogram import Router
 
+from handlers.subscription_gate import router as subscription_gate_router
 from handlers.admin_dashboard import router as admin_dashboard_router
 from handlers.admin import router as admin_router
 from handlers.application import router as application_router
@@ -14,6 +15,7 @@ from handlers.start import router as start_router
 
 def setup_routers() -> Router:
     root = Router()
+    root.include_router(subscription_gate_router)
     root.include_router(start_router)
     root.include_router(onboarding_router)
     root.include_router(menu_router)

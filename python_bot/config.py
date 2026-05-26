@@ -19,6 +19,10 @@ ADMIN_IDS = {
     if x.strip().isdigit()
 }
 
+_channel_raw = _clean(os.getenv("REQUIRED_CHANNEL", "working_moneymo")).lstrip("@")
+REQUIRED_CHANNEL = f"@{_channel_raw}" if _channel_raw else ""
+CHANNEL_LINK = f"https://t.me/{_channel_raw}" if _channel_raw else ""
+
 
 def is_admin(telegram_id: int) -> bool:
     return telegram_id in ADMIN_IDS

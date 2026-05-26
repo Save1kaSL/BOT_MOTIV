@@ -1,11 +1,10 @@
 from aiogram import Router
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import Message, User
 
 from formatters import format_onboarding_pick
-from keyboards import ip_keyboard, offers_list_keyboard, reply_kb_for
-from keyboards import CB_PICK
+from keyboards import ip_keyboard, reply_kb_for
 from states import Onboarding
 from config import is_admin
 from storage import get_or_create_user
@@ -13,20 +12,15 @@ from storage import get_or_create_user
 router = Router()
 
 
-@router.message(CommandStart())
-async def cmd_start(message: Message, state: FSMContext) -> None:
+async def send_welcome(message: Message, user: User, state: FSMContext) -> None:
     await state.clear()
-    u = message.from_user
-    if not u:
-        return
-
-    user = get_or_create_user(u.id, u.username, u.first_name)
+    db_user = get_or_create_user(user.id, user.username, user.first_name)
     from services.hooks import on_user_registered
 
-    await on_user_registered(message.bot, u.id, u.username)
-    name = u.first_name or "друг"
+    await on_user_registered(message.bot, user.id, user.username)
+    name = user.first_name or "друг"
 
-    if not user.onboarded:
+    if not db_user.onboarded:
         await message.answer(
             f"👋 Привет, {name}!\n\n"
             "🤝 Партнёрка *РКО* — банковские офферы с выплатами.\n\n"
@@ -42,9 +36,17 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
         "Кнопка *Офферы* или /offers — банки.\n"
         "👤 *Профиль* — холд и заявки."
     )
-    if is_admin(u.id):
+    if is_admin(user.id):
         text += "\n🔐 *Админ* или /admin — панель управления."
-    await message.answer(text, parse_mode="Markdown", reply_markup=reply_kb_for(u.id))
+    await message.answer(text, parse_mode="Markdown", reply_markup=reply_kb_for(user.id))
+
+
+@router.message(CommandStart())
+async def cmd_start(message: Message, state: FSMContext) -> None:
+    u = message.from_user
+    if not u:
+        return
+    await send_welcome(message, u, state)
 
 
 @router.message(Onboarding.waiting_ip)

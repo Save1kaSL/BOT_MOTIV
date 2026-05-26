@@ -11,11 +11,12 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 import os
 
-from config import BOT_TOKEN, TELEGRAM_PROXY
+from config import BOT_TOKEN, REQUIRED_CHANNEL, TELEGRAM_PROXY
 from handlers import setup_routers
 from jobs.scheduler import background_loop
 from keyboards import BOT_COMMANDS
 from middleware.activity import ActivityMiddleware
+from middleware.subscription import SubscriptionMiddleware
 from storage import init_db
 
 _log_level = getattr(logging, os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO)
@@ -75,12 +76,16 @@ async def main() -> None:
     await setup_commands(bot)
 
     dp = Dispatcher(storage=MemoryStorage())
+    dp.message.middleware(SubscriptionMiddleware())
+    dp.callback_query.middleware(SubscriptionMiddleware())
     dp.message.middleware(ActivityMiddleware())
     dp.include_router(setup_routers())
 
     asyncio.create_task(background_loop(bot))
 
     logger.info("🤖 Бот запущен — scoring, analytics, reminders, cashflow")
+    if REQUIRED_CHANNEL:
+        logger.info("📢 Обязательная подписка: %s", REQUIRED_CHANNEL)
     try:
         await dp.start_polling(bot, handle_signals=True)
     finally:

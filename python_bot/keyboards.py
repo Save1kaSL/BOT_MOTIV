@@ -17,6 +17,8 @@ CB_FORM = "form:"
 CB_SKIP = "pick:skip"
 CB_PROG = "prog:"
 CB_SMZ = "smz:"
+CB_SUB = "sub:"
+CB_SUB_CHECK = "sub:check"
 
 BOT_COMMANDS = [
     BotCommand(command="offers", description="Офферы — список банков"),
@@ -28,6 +30,30 @@ BOT_COMMANDS = [
 ]
 
 CB_ADM = "adm:"
+
+
+def link_button(text: str, url: str) -> InlineKeyboardButton:
+    return InlineKeyboardButton(text=text, url=url, style="success")
+
+
+def subscription_gate_text() -> str:
+    from config import REQUIRED_CHANNEL
+
+    return (
+        "📢 *Доступ только для подписчиков*\n\n"
+        f"Подпишись на канал {REQUIRED_CHANNEL}, затем нажми *Я подписался*."
+    )
+
+
+def subscription_keyboard() -> InlineKeyboardMarkup:
+    from config import CHANNEL_LINK, REQUIRED_CHANNEL
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [link_button(f"📢 Подписаться — {REQUIRED_CHANNEL}", CHANNEL_LINK)],
+            [InlineKeyboardButton(text="✅ Я подписался", callback_data=CB_SUB_CHECK)],
+        ]
+    )
 
 
 def reply_kb_for(telegram_id: int) -> ReplyKeyboardMarkup:
@@ -202,16 +228,22 @@ def offer_detail_keyboard(offer: RkoOffer, current_step: int = 0, telegram_id: i
             ])
         if shows_link_at_step(offer.id, current_step) and offer.referral_link:
             rows.append([
-                InlineKeyboardButton(
-                    text="🔗 Перейти по ссылке",
-                    url=_format_referral_link(offer.referral_link, get_offer_sub1(telegram_id, offer.id) if telegram_id else None),
+                link_button(
+                    "🔗 Перейти по ссылке",
+                    _format_referral_link(
+                        offer.referral_link,
+                        get_offer_sub1(telegram_id, offer.id) if telegram_id else None,
+                    ),
                 ),
             ])
         elif not needs_form_at_step(offer.id, current_step) and offer.referral_link and current_step == 0:
             rows.append([
-                InlineKeyboardButton(
-                    text="🔗 Перейти по ссылке",
-                    url=_format_referral_link(offer.referral_link, get_offer_sub1(telegram_id, offer.id) if telegram_id else None),
+                link_button(
+                    "🔗 Перейти по ссылке",
+                    _format_referral_link(
+                        offer.referral_link,
+                        get_offer_sub1(telegram_id, offer.id) if telegram_id else None,
+                    ),
                 ),
             ])
 
