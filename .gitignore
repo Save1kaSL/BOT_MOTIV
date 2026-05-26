@@ -1,0 +1,42 @@
+# Secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.python-version
+
+# Bot data (local SQLite)
+python_bot/data/
+*.db
+*.db-journal
+
+# Node / Next.js
+node_modules/
+dist/
+build/
+.next/
+out/
+.turbo/
+.npm/
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.cursor/
+.DS_Store
+Thumbs.db
+
+# Prisma generated (optional — regenerate with prisma generate)
+packages/db/prisma/*.db
+
+# Misc
+*.swp
+*.swo
+*~

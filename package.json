@@ -1,0 +1,30 @@
+{
+  "name": "bot-motiv",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev:bot",
+    "start": "npm run dev:bot",
+    "dev:api": "npm run dev -w @bot-motiv/api",
+    "dev:bot": "npm run dev -w @bot-motiv/bot",
+    "dev:admin": "npm run dev -w @bot-motiv/admin",
+    "db:generate": "npm run generate -w @bot-motiv/db",
+    "db:migrate": "npm run migrate -w @bot-motiv/db",
+    "db:push": "npm run push -w @bot-motiv/db",
+    "db:seed": "npm run seed -w @bot-motiv/db",
+    "db:studio": "npm run studio -w @bot-motiv/db",
+    "postinstall": "npm run generate -w @bot-motiv/db"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

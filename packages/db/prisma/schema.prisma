@@ -1,0 +1,247 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum LeadStatus {
+  NEW
+  OFFER_SELECTED
+  IN_PROGRESS
+  WAITING_MEETING
+  COMPLETED
+  APPROVED
+  PAID
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  PAID
+  REJECTED
+}
+
+enum NotificationType {
+  MEETING_REMINDER
+  COMPLETE_OFFER
+  REACTIVATION
+  NEW_OFFER
+  REFERRAL_BONUS
+  CUSTOM
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+}
+
+enum ReferralBonusStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
+model User {
+  id             String     @id @default(cuid())
+  telegramId     BigInt     @unique
+  username       String?
+  firstName      String?
+  lastName       String?
+  referralCode   String     @unique
+  referredById   String?
+  referredBy     User?      @relation("Referrals", fields: [referredById], references: [id])
+  referrals      User[]     @relation("Referrals")
+  trafficSource  String?
+  isBlocked      Boolean    @default(false)
+  lastActiveAt   DateTime   @default(now())
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  leads          Lead[]
+  payments       Payment[]
+  notifications  Notification[]
+  referralBonuses ReferralBonus[] @relation("ReferrerBonuses")
+  aiMessages     AiMessage[]
+
+  @@index([referralCode])
+  @@index([referredById])
+  @@map("users")
+}
+
+model Offer {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  title        String
+  description  String
+  ourProfit    String
+  clientProfit String
+  steps        Json
+  referralLink String
+  tags         Json     @default("[]")
+  active       Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  leads Lead[]
+
+  @@map("offers")
+}
+
+model Lead {
+  id          String     @id @default(cuid())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  offerId     String?
+  offer       Offer?     @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  status      LeadStatus @default(NEW)
+  currentStep Int        @default(0)
+  stepData    Json?
+  notes       String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  payments Payment[]
+
+  @@index([userId])
+  @@index([offerId])
+  @@index([status])
+  @@map("leads")
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leadId    String?
+  lead      Lead?         @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  amount    Float         @default(0)
+  currency  String        @default("RUB")
+  status    PaymentStatus @default(PENDING)
+  note      String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([userId])
+  @@map("payments")
+}
+
+model ReferralBonus {
+  id         String              @id @default(cuid())
+  referrerId String
+  referrer   User                @relation("ReferrerBonuses", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId String
+  amount     Float               @default(0)
+  status     ReferralBonusStatus @default(PENDING)
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([referrerId])
+  @@map("referral_bonuses")
+}
+
+model Notification {
+  id          String             @id @default(cuid())
+  userId      String
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        NotificationType
+  status      NotificationStatus @default(PENDING)
+  payload     Json?
+  scheduledAt DateTime
+  sentAt      DateTime?
+  createdAt   DateTime           @default(now())
+
+  @@index([status, scheduledAt])
+  @@index([userId])
+  @@map("notifications")
+}
+
+model KnowledgeArticle {
+  id        String   @id @default(cuid())
+  category  String
+  title     String
+  content   String
+  tags      Json     @default("[]")
+  offerSlug String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([category])
+  @@index([offerSlug])
+  @@map("knowledge_articles")
+}
+
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("message_templates")
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  role         AdminRole @default(ADMIN)
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  auditLogs AuditLog[]
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id        String    @id @default(cuid())
+  adminId   String?
+  admin     AdminUser? @relation(fields: [adminId], references: [id], onDelete: SetNull)
+  action    String
+  entity    String?
+  entityId  String?
+  meta      Json?
+  createdAt DateTime  @default(now())
+
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model AiMessage {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@map("ai_messages")
+}
+
+model BotSession {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  state     String   @default("idle")
+  data      Json?
+  updatedAt DateTime @updatedAt
+
+  @@map("bot_sessions")
+}
