@@ -1,0 +1,29 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# Локальные зависимости и сборки
+node_modules/
+python_bot/.venv/
+**/__pycache__/
+**/*.py[cod]
+apps/admin/.next/
+dist/
+build/
+
+# Локальные данные (на Bothost — /app/data)
+python_bot/data/
+*.db
+*.db-journal
+
+# IDE
+.idea/
+.vscode/
+.cursor/
+.DS_Store
+
+# Документация и прочее — не нужно в образе бота
+*.md
+!python_bot/README.md
