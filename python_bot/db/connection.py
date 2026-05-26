@@ -3,9 +3,8 @@
 from __future__ import annotations
 
 import sqlite3
-from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parent.parent / "data" / "users.db"
+from config import DB_PATH
 
 
 def get_connection() -> sqlite3.Connection:

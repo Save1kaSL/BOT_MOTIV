@@ -11,6 +11,25 @@ def _clean(value: str | None) -> str:
     return (value or "").strip().strip("'\"")
 
 
+def _resolve_data_dir() -> Path:
+    custom = _clean(os.getenv("DATA_DIR"))
+    if custom:
+        return Path(custom)
+    return ROOT / "python_bot" / "data"
+
+
+def _resolve_db_path() -> Path:
+    for key in ("DATABASE_PATH", "DB_PATH"):
+        custom = _clean(os.getenv(key))
+        if custom:
+            return Path(custom)
+    return _resolve_data_dir() / "users.db"
+
+
+DATA_DIR = _resolve_data_dir()
+DB_PATH = _resolve_db_path()
+
+
 BOT_TOKEN = _clean(os.getenv("TELEGRAM_BOT_TOKEN"))
 TELEGRAM_PROXY = _clean(os.getenv("TELEGRAM_PROXY")) or None
 ADMIN_IDS = {

@@ -11,7 +11,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 import os
 
-from config import BOT_TOKEN, REQUIRED_CHANNEL, TELEGRAM_PROXY
+from config import BOT_TOKEN, DB_PATH, REQUIRED_CHANNEL, TELEGRAM_PROXY
 from handlers import setup_routers
 from jobs.scheduler import background_loop
 from keyboards import BOT_COMMANDS
@@ -49,6 +49,7 @@ async def main() -> None:
         sys.exit(1)
 
     init_db()
+    logger.info("💾 База данных: %s", DB_PATH)
 
     session = AiohttpSession(timeout=SESSION_TIMEOUT, proxy=TELEGRAM_PROXY)
     if TELEGRAM_PROXY:

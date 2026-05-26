@@ -8,7 +8,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "data" / "users.db"
+from config import DB_PATH
 
 
 def _conn() -> sqlite3.Connection:
