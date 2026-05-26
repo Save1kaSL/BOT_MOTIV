@@ -4,6 +4,40 @@ from offer_flow import get_step_instruction, is_smz_step
 from offers import RkoOffer
 
 
+def escape_markdown(text: object) -> str:
+    """Экранирование для Telegram legacy Markdown."""
+    s = "" if text is None else str(text)
+    for ch in ("\\", "_", "*", "`", "["):
+        s = s.replace(ch, f"\\{ch}")
+    return s
+
+
+_STATUS_LABELS = {
+    "выбран": "выбран",
+    "в_обработке": "в обработке",
+    "на_проверке": "на проверке",
+    "одобрено": "одобрено",
+    "выплачено": "выплачено",
+    "отклонено": "отклонено",
+    "new_lead": "новый лид",
+    "stable_lead": "стабильный лид",
+    "cd_in_progress": "ЦД в работе",
+    "cd_completed": "ЦД выполнено",
+    "under_review": "на проверке",
+    "approved": "одобрено",
+    "hold": "холд",
+    "safe_period": "защитный период",
+    "completed": "завершено",
+    "rejected": "отклонено",
+}
+
+
+def format_status(status: str | None) -> str:
+    if not status:
+        return "—"
+    return _STATUS_LABELS.get(status, status.replace("_", " "))
+
+
 def _money(amount: int) -> str:
     return f"{amount:,}".replace(",", " ")
 
@@ -118,7 +152,10 @@ def format_profile(user, offers_rows: list[dict]) -> str:
             o = get_offer(row["offer_id"])
             name = o.name if o else row["offer_id"]
             step = row.get("current_step", 0)
-            lines.append(f"▫️ {name} — {row['status']} (шаг {step})")
+            status = format_status(row.get("status"))
+            lines.append(
+                f"▫️ {escape_markdown(name)} — {escape_markdown(status)} (шаг {step})"
+            )
     else:
         lines.append("📋 Заявок пока нет. Нажми *Офферы*.")
     return "\n".join(lines)
@@ -146,7 +183,7 @@ def format_admin_stats(stats: dict) -> str:
         "*По статусам:*",
     ]
     for st, cnt in stats.get("by_status", {}).items():
-        lines.append(f"▫️ {st}: {cnt}")
+        lines.append(f"▫️ {escape_markdown(format_status(st))}: {cnt}")
     return "\n".join(lines)
 
 
@@ -160,11 +197,11 @@ def format_admin_app(app: dict) -> str:
 
     lines = [
         f"📄 *Заявка #{app['id']}*\n",
-        f"👤 {name} (@{app.get('username') or '—'})",
+        f"👤 {escape_markdown(name)} (@{escape_markdown(app.get('username') or '—')})",
         f"🆔 Telegram: `{app['telegram_id']}`",
         f"🪪 ИП: {ip}",
-        f"🏦 Банк: *{bank}*",
-        f"📊 Статус: *{app['status']}*",
+        f"🏦 Банк: *{escape_markdown(bank)}*",
+        f"📊 Статус: *{escape_markdown(format_status(app.get('status')))}*",
         f"🔒 Холд юзера: {_money(app.get('hold_rub', 0))} ₽",
         f"💸 Доступно к выводу: {_money(app.get('available_to_withdraw_rub', 0))} ₽",
     ]
@@ -174,7 +211,7 @@ def format_admin_app(app: dict) -> str:
         lines.append("\n📝 *Анкета:*")
         labels = {"inn": "ИНН", "full_name": "ФИО", "phone": "Телефон", "email": "Почта", "city": "Город"}
         for k, v in fd.items():
-            lines.append(f"▫️ {labels.get(k, k)}: {v}")
+            lines.append(f"▫️ {labels.get(k, k)}: {escape_markdown(v)}")
     else:
         lines.append("\n📝 Анкета не заполнена (оффер по ссылке)")
 

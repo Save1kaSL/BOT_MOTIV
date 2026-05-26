@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from formatters import _money, format_admin_app
+from formatters import _money, escape_markdown, format_admin_app, format_status
 
 
 def risk_badge(risk: str) -> str:
@@ -56,15 +56,15 @@ def format_app_card_extended(app: dict) -> str:
 
     extra = [
         "",
-        f"🎯 Pipeline: *{pipeline}*",
+        f"🎯 Pipeline: *{escape_markdown(format_status(pipeline))}*",
         f"📈 Trust: *{trust}* {risk_badge(risk)}",
     ]
     if dup:
         extra.append("⚠️ *Дубли:*")
-        extra.extend(f"▫️ {f}" for f in dup[:5])
+        extra.extend(f"▫️ {escape_markdown(f)}" for f in dup[:5])
     if sus:
         extra.append("🚩 *Suspicious:*")
-        extra.extend(f"▫️ {f}" for f in sus[:5])
+        extra.extend(f"▫️ {escape_markdown(f)}" for f in sus[:5])
     if risk == "high":
         extra.append("\n🔴 *Не рекомендовать быстрые выплаты*")
     return base + "\n".join(extra)
