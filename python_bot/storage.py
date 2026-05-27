@@ -438,6 +438,18 @@ def adjust_hold_and_available(telegram_id: int, hold_rub: int | None = None, ava
             )
 
 
+def get_user_balances(telegram_id: int) -> tuple[int, int] | None:
+    """Возвращает (hold_rub, available_to_withdraw_rub) или None, если юзера нет."""
+    with _conn() as c:
+        row = c.execute(
+            "SELECT hold_rub, available_to_withdraw_rub FROM users WHERE telegram_id = ?",
+            (telegram_id,),
+        ).fetchone()
+    if not row:
+        return None
+    return int(row["hold_rub"] or 0), int(row["available_to_withdraw_rub"] or 0)
+
+
 def move_hold_to_available(telegram_id: int, amount: int) -> None:
     amount = max(0, int(amount))
     with _conn() as c:

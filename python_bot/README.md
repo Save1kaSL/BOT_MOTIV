@@ -53,7 +53,7 @@ python_bot/
 - Флаги в `duplicate_flags`, уведомление админам
 
 ### Analytics dashboard
-- Admin → **📊 Dashboard**: банки, ROI, profit, leads conversion, cashflow
+- Admin → **📊 Аналитика**: банки, ROI, profit, конверсия, деньги (cashflow)
 - Кэш `analytics_cache` (10 мин)
 
 ### Cashflow
@@ -78,7 +78,7 @@ python_bot/
 
 ## Admin UI
 
-- Dashboard, Cashflow, Payouts, Search, High risk filter
+- Аналитика, Деньги (cashflow), Выплаты, Поиск, High risk
 - Risk badges на карточке заявки
 - Одобрить / Написать на скринах (без изменений FSM)
 

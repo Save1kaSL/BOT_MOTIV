@@ -27,6 +27,7 @@ from states import AdminFinance, AdminSearch
 from storage import (
     DB_PATH,
     adjust_hold_and_available,
+    get_user_balances,
     list_payout_requests,
     mark_payout_paid,
     move_hold_to_available,
@@ -50,10 +51,10 @@ async def adm_dashboard(callback: CallbackQuery) -> None:
     kb = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="🔄 Обновить", callback_data=f"{CB_ADM}dashboard")],
-            [InlineKeyboardButton(text="💵 Cashflow", callback_data=f"{CB_ADM}cashflow")],
+            [InlineKeyboardButton(text="💵 Деньги (cashflow)", callback_data=f"{CB_ADM}cashflow")],
             [InlineKeyboardButton(text="🔍 Поиск", callback_data=f"{CB_ADM}search")],
             [InlineKeyboardButton(text="🔴 High risk", callback_data=f"{CB_ADM}apps:risk:0")],
-            [InlineKeyboardButton(text="💳 Payouts", callback_data=f"{CB_ADM}payouts:0")],
+            [InlineKeyboardButton(text="💳 Выплаты", callback_data=f"{CB_ADM}payouts:0")],
             [InlineKeyboardButton(text="◀️ Меню", callback_data=f"{CB_ADM}menu")],
         ]
     )
@@ -71,6 +72,19 @@ async def adm_cashflow(callback: CallbackQuery) -> None:
         await callback.message.edit_text(
             format_cashflow(cf), parse_mode="Markdown", reply_markup=_back_menu()
         )
+
+
+def _payout_type_ru(t: str) -> str:
+    return {"main": "основная", "advance": "аванс", "retention": "ретеншн"}.get(t, t)
+
+
+def _payout_status_ru(s: str) -> str:
+    return {
+        "pending": "в ожидании",
+        "scheduled": "запланировано",
+        "paid": "выплачено",
+        "cancelled": "отменено",
+    }.get(s, s)
 
 
 @router.callback_query(F.data == f"{CB_ADM}search")
@@ -180,7 +194,7 @@ async def adm_payout_requests(callback: CallbackQuery) -> None:
         req_short = req[:60] + ("…" if len(req) > 60 else "")
         lines.append(
             f"#{it['id']} | `{it['telegram_id']}` | @{uname}\n"
-            f"Тип: *{it['payout_type']}* | {_fmt_money(it['amount'])} ₽ | {it['status']}\n"
+            f"Тип: *{_payout_type_ru(it['payout_type'])}* | {_fmt_money(it['amount'])} ₽ | {_payout_status_ru(it['status'])}\n"
             f"Реквизиты: {req_short}\n"
         )
         buttons.append([
@@ -272,9 +286,30 @@ async def adm_hold_edit_values(message: Message, state: FSMContext) -> None:
     if hold is None and available is None:
         await message.answer("Не понял значения. Пример: hold=10000 available=2500")
         return
+    before = get_user_balances(uid) if uid else None
     adjust_hold_and_available(uid, hold_rub=hold, available_rub=available)
+    after = get_user_balances(uid) if uid else None
     await state.clear()
     await message.answer("✅ Балансы пользователя обновлены")
+
+    # Уведомление пользователю о ручной правке баланса
+    if before and after:
+        b_hold, b_av = before
+        a_hold, a_av = after
+        if (b_hold, b_av) != (a_hold, a_av):
+            def _fmt(v: int) -> str:
+                return f"{int(v):,}".replace(",", " ")
+
+            changed = []
+            if b_hold != a_hold:
+                changed.append(f"🔒 В холде: *{_fmt(b_hold)} ₽* → *{_fmt(a_hold)} ₽*")
+            if b_av != a_av:
+                changed.append(f"💸 К выводу: *{_fmt(b_av)} ₽* → *{_fmt(a_av)} ₽*")
+            text_user = "ℹ️ Админ обновил ваш баланс.\n\n" + "\n".join(changed)
+            try:
+                await message.bot.send_message(uid, text_user, parse_mode="Markdown")
+            except Exception:
+                pass
 
 
 @router.callback_query(F.data.regexp(rf"^{CB_ADM}timeline:(\d+)$"))

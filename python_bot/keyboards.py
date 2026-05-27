@@ -76,7 +76,7 @@ def main_reply_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
 def admin_menu_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="📊 Dashboard", callback_data=f"{CB_ADM}dashboard")],
+            [InlineKeyboardButton(text="📊 Аналитика", callback_data=f"{CB_ADM}dashboard")],
             [InlineKeyboardButton(text="📈 Статистика", callback_data=f"{CB_ADM}stats")],
             [InlineKeyboardButton(text="📋 Все заявки", callback_data=f"{CB_ADM}apps:all:0")],
             [
@@ -84,8 +84,8 @@ def admin_menu_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="🔎 Поиск", callback_data=f"{CB_ADM}search"),
             ],
             [
-                InlineKeyboardButton(text="💵 Cashflow", callback_data=f"{CB_ADM}cashflow"),
-                InlineKeyboardButton(text="💳 Payouts", callback_data=f"{CB_ADM}payouts:0"),
+                InlineKeyboardButton(text="💵 Деньги (cashflow)", callback_data=f"{CB_ADM}cashflow"),
+                InlineKeyboardButton(text="💳 Выплаты", callback_data=f"{CB_ADM}payouts:0"),
             ],
             [
                 InlineKeyboardButton(text="💸 Выплаты (запросы)", callback_data=f"{CB_ADM}payreq:0"),

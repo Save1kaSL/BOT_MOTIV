@@ -69,7 +69,8 @@ OFFERS: dict[str, RkoOffer] = {
     "alfa_regbiz": _offer(
         id="alfa_regbiz",
         name="Альфа РегБиз",
-        payout=3500,
+        # По прайсу: 3 000 ₽ всего (аванс 500 + основная 2 500)
+        payout=2500,
         safe_period_days=30,
         referral_link="https://example.com/alfa-regbiz",
         description="Регистрация ИП и РКО в Альфа-Банке для самозанятых.",
@@ -90,7 +91,8 @@ OFFERS: dict[str, RkoOffer] = {
     "alfa_rko": _offer(
         id="alfa_rko",
         name="Альфа РКО",
-        payout=3000,
+        # По прайсу: 3 000 ₽ всего (аванс 500 + основная 2 500)
+        payout=2500,
         safe_period_days=30,
         referral_link="https://example.com/alfa-rko",
         description="Открытие расчётного счёта в Альфа-Банке.",
@@ -105,7 +107,8 @@ OFFERS: dict[str, RkoOffer] = {
     "vtb": _offer(
         id="vtb",
         name="ВТБ",
-        payout=3500,
+        # По прайсу: 2 500 ₽ всего (аванс 500 + основная 2 000)
+        payout=2000,
         safe_period_days=30,
         referral_link="https://example.com/vtb-rko",
         description="РКО ВТБ для ИП и ООО.",
@@ -124,7 +127,8 @@ OFFERS: dict[str, RkoOffer] = {
     "tinkoff": _offer(
         id="tinkoff",
         name="Тинькофф",
-        payout=4000,
+        # По прайсу: 1 500 ₽ всего (аванс 500 + основная 1 000)
+        payout=1000,
         safe_period_days=30,
         referral_link="https://www.tbank.ru/business/rko/",
         description="Тинькофф Бизнес — открытие РКО.",
@@ -148,7 +152,8 @@ OFFERS: dict[str, RkoOffer] = {
     "loko": _offer(
         id="loko",
         name="Локо",
-        payout=4500,
+        # По прайсу: 2 500 ₽ всего (аванс 500 + основная 2 000)
+        payout=2000,
         safe_period_days=45,
         referral_link="https://rko-group.ru/s/ZJWmXohL",
         description="Локо-Банк — операции между юрлицами.",
@@ -184,9 +189,10 @@ OFFERS: dict[str, RkoOffer] = {
     "ozon": _offer(
         id="ozon",
         name="Ozon",
-        payout=3000,
+        # По прайсу: 2 500 ₽ всего (аванс 500 + основная 2 000)
+        payout=2000,
         safe_period_days=30,
-        referral_link="https://finance.ozon.ru/business",
+        referral_link="https://rko-group.ru/s/8azLeKbJ",
         description="Ozon Банк для бизнеса.",
         cda_conditions="Пополнение от 3 000 ₽.",
         steps=["Ссылка и инструкция", "Целевое действие (ЦД)"],
@@ -196,9 +202,10 @@ OFFERS: dict[str, RkoOffer] = {
     "cifra": _offer(
         id="cifra",
         name="Цифра Банк",
-        payout=2800,
+        # По прайсу: 2 000 ₽ всего (аванс 500 + основная 1 500)
+        payout=1500,
         safe_period_days=30,
-        referral_link="https://example.com/cifra",
+        referral_link="https://rko-group.ru/s/yr3V1nwt",
         description="Цифра — оплата тарифа.",
         cda_conditions="Оплата тарифа (не «Быстрый старт»).",
         steps=["Ссылка и инструкция", "Целевое действие (ЦД)"],
@@ -208,9 +215,10 @@ OFFERS: dict[str, RkoOffer] = {
     "svoy": _offer(
         id="svoy",
         name="Свой Банк",
-        payout=4000,
+        # По прайсу: 2 000 ₽ всего (аванс 500 + основная 1 500)
+        payout=1500,
         safe_period_days=30,
-        referral_link="https://example.com/svoy",
+        referral_link="https://rko-group.ru/s/ub6qvums",
         description="Свой Банк — 3 операции от 20к.",
         cda_conditions="3 операции от 20 000 ₽.",
         steps=["Ссылка и инструкция", "Целевое действие (ЦД)"],
@@ -220,9 +228,10 @@ OFFERS: dict[str, RkoOffer] = {
     "bspb": _offer(
         id="bspb",
         name="БСПБ",
-        payout=3500,
+        # По прайсу: 2 000 ₽ всего (аванс 500 + основная 1 500)
+        payout=1500,
         safe_period_days=30,
-        referral_link="https://example.com/bspb",
+        referral_link="https://rko-group.ru/s/SqMOH0Wm",
         description="БСПБ — хоз. операции от 5к.",
         cda_conditions="Хоз. операции от 5 000 ₽.",
         steps=["Ссылка и инструкция", "Целевое действие (ЦД)"],
@@ -232,7 +241,8 @@ OFFERS: dict[str, RkoOffer] = {
     "uralsib": _offer(
         id="uralsib",
         name="Уралсиб",
-        payout=4500,
+        # По прайсу: 3 000 ₽ всего (аванс 500 + основная 2 500)
+        payout=2500,
         safe_period_days=45,
         referral_link="https://example.com/uralsib",
         description="Уралсиб — 15к операций или комиссия 1990 ₽.",
@@ -247,14 +257,28 @@ OFFERS: dict[str, RkoOffer] = {
     "otp": _offer(
         id="otp",
         name="ОТП Банк",
-        payout=4000,
+        # По прайсу: 2 000 ₽ всего (аванс 500 + основная 1 500)
+        payout=1500,
         safe_period_days=30,
-        referral_link="https://example.com/otp",
+        referral_link="https://rko-group.ru/s/tD5hlGHO",
         description="ОТП — 3 операции от 10к.",
         cda_conditions="3 операции от 10 000 ₽.",
         steps=["Ссылка и инструкция", "Целевое действие (ЦД)"],
         critical_conditions=["Не переводить физлицам"],
         reject_reasons=["115-ФЗ", "Подозрительные операции"],
+    ),
+    "ubrir": _offer(
+        id="ubrir",
+        name="УБРиР",
+        # По прайсу: 2 000 ₽ всего (аванс 500 + основная 1 500)
+        payout=1500,
+        safe_period_days=30,
+        referral_link="https://trk.ppdu.ru/click/CeoEvohP?erid=Kra23k9bA",
+        description="УБРиР — открытие РКО по ссылке.",
+        cda_conditions="Открытие счёта и выполнение условий банка.",
+        steps=["Ссылка и инструкция", "Целевое действие (ЦД)"],
+        critical_conditions=["Только реальные данные", "Один ИНН = одна заявка"],
+        reject_reasons=["Дубль", "115-ФЗ", "Закрытие счёта"],
     ),
 }
 

@@ -164,9 +164,9 @@ def format_profile(user, offers_rows: list[dict]) -> str:
 def format_admin_menu() -> str:
     return (
         "🔐 *Админ-панель*\n\n"
-        "📊 Dashboard — аналитика, ROI, cashflow\n"
-        "📋 Заявки — фильтры, поиск, risk badges\n"
-        "💳 Payouts — журнал выплат\n"
+        "📊 Аналитика — ROI, деньги, конверсия\n"
+        "📋 Заявки — фильтры, поиск, риски\n"
+        "💳 Выплаты — журнал выплат\n"
         "🔴 High risk — не рекомендовать быстрые выплаты\n"
         "Скрины: Одобрить / Написать"
     )

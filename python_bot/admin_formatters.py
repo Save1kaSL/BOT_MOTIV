@@ -17,21 +17,21 @@ def format_dashboard(data: dict) -> str:
     cf = data.get("cashflow", {})
     leads = data.get("leads", {})
     lines = [
-        "📊 *Analytics Dashboard*",
+        "📊 *Админ-панель: аналитика*",
         "",
-        "*Cashflow*",
-        f"▫️ Бот должен (hold+pending): *{_money(cf.get('bot_owes', 0))} ₽*",
+        "*Деньги*",
+        f"▫️ Бот должен (холд + ожидание): *{_money(cf.get('bot_owes', 0))} ₽*",
         f"▫️ В холде: *{_money(cf.get('total_hold', 0))} ₽*",
         f"▫️ Выплачено: *{_money(cf.get('total_paid', 0))} ₽*",
-        f"▫️ Pending main: *{_money(cf.get('pending_payouts', 0))} ₽*",
-        f"▫️ Pending advance: *{_money(cf.get('pending_advances', 0))} ₽*",
+        f"▫️ Ожидает выплат (основные): *{_money(cf.get('pending_payouts', 0))} ₽*",
+        f"▫️ Ожидает выплат (авансы): *{_money(cf.get('pending_advances', 0))} ₽*",
         f"▫️ Ожидается от ПП: *{_money(cf.get('expected_pp', 0))} ₽*",
-        f"▫️ Reserve: *{_money(cf.get('payout_reserve', 0))} ₽*",
+        f"▫️ Резерв: *{_money(cf.get('payout_reserve', 0))} ₽*",
         "",
-        "*Leads*",
-        f"▫️ Users: *{leads.get('users', 0)}* | conv *{leads.get('conversion_pct', 0)}%*",
-        f"▫️ Completion: *{leads.get('completion_pct', 0)}%*",
-        f"▫️ Avg trust: *{leads.get('avg_trust_score', 0)}*",
+        "*Лиды*",
+        f"▫️ Пользователей: *{leads.get('users', 0)}* | конверсия *{leads.get('conversion_pct', 0)}%*",
+        f"▫️ Завершение: *{leads.get('completion_pct', 0)}%*",
+        f"▫️ Средний trust: *{leads.get('avg_trust_score', 0)}*",
         f"▫️ High risk: *{leads.get('high_risk_count', 0)}*",
         "",
         "*По банкам* (топ):",
@@ -82,22 +82,34 @@ def format_timeline(events: list[dict]) -> str:
 
 def format_cashflow(cf: dict) -> str:
     return (
-        "💵 *Cashflow*\n\n"
+        "💵 *Деньги (cashflow)*\n\n"
         f"Бот должен: *{_money(cf.get('bot_owes', 0))} ₽*\n"
-        f"Hold: *{_money(cf.get('total_hold', 0))} ₽*\n"
-        f"Paid: *{_money(cf.get('total_paid', 0))} ₽*\n"
-        f"Pending main: *{_money(cf.get('pending_payouts', 0))} ₽*\n"
-        f"Pending advance: *{_money(cf.get('pending_advances', 0))} ₽*\n"
-        f"Expected PP: *{_money(cf.get('expected_pp', 0))} ₽*\n"
-        f"Reserve: *{_money(cf.get('payout_reserve', 0))} ₽*"
+        f"В холде: *{_money(cf.get('total_hold', 0))} ₽*\n"
+        f"Выплачено: *{_money(cf.get('total_paid', 0))} ₽*\n"
+        f"Ожидает выплат (основные): *{_money(cf.get('pending_payouts', 0))} ₽*\n"
+        f"Ожидает выплат (авансы): *{_money(cf.get('pending_advances', 0))} ₽*\n"
+        f"Ожидается от ПП: *{_money(cf.get('expected_pp', 0))} ₽*\n"
+        f"Резерв: *{_money(cf.get('payout_reserve', 0))} ₽*"
     )
 
 
 def format_payouts_list(items: list[dict], page: int, total: int) -> str:
-    lines = [f"💳 *Payouts* ({total})", ""]
+    def _payout_type_ru(t: str) -> str:
+        return {"main": "основная", "advance": "аванс", "retention": "ретеншн"}.get(t, t)
+
+    def _payout_status_ru(s: str) -> str:
+        return {
+            "pending": "в ожидании",
+            "scheduled": "запланировано",
+            "paid": "выплачено",
+            "cancelled": "отменено",
+        }.get(s, s)
+
+    lines = [f"💳 *Выплаты* ({total})", ""]
     for p in items:
         name = p.get("first_name") or p.get("username") or p["telegram_id"]
         lines.append(
-            f"#{p['id']} {name} | {p['payout_type']} *{_money(p['amount'])} ₽* | {p['status']}"
+            f"#{p['id']} {escape_markdown(name)} | *{_payout_type_ru(p['payout_type'])}* "
+            f"*{_money(p['amount'])} ₽* | {_payout_status_ru(p['status'])}"
         )
     return "\n".join(lines)
