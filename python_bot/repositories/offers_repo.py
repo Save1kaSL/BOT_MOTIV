@@ -159,7 +159,7 @@ def list_applications_filtered(
         ).fetchone()[0]
         rows = c.execute(
             f"""
-            SELECT uo.id, uo.telegram_id, uo.offer_id, uo.status, uo.pipeline_stage,
+            SELECT uo.id, uo.telegram_id, uo.offer_id, uo.status, uo.pipeline_stage, uo.lead_sub1,
                    uo.form_data, uo.current_step, uo.approved_at,
                    u.first_name, u.username, u.has_ip, u.trust_score, u.risk_level,
                    u.suspicious_flags, u.duplicate_flags
@@ -178,6 +178,7 @@ def list_applications_filtered(
             "telegram_id": r["telegram_id"],
             "offer_id": r["offer_id"],
             "status": r["status"],
+            "lead_sub1": r["lead_sub1"],
             "pipeline_stage": r["pipeline_stage"] or "new_lead",
             "form_data": loads(r["form_data"], {}),
             "current_step": r["current_step"] or 0,

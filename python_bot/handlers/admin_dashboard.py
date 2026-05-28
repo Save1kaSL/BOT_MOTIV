@@ -115,8 +115,9 @@ async def adm_search_run(message: Message, state: FSMContext) -> None:
         from offers import get_offer
         bank = get_offer(app["offer_id"])
         name = bank.name if bank else app["offer_id"]
+        lead_id = app.get("lead_sub1") or "—"
         lines.append(
-            f"• {app['first_name'] or app['username']} | {name} | {risk_badge(app['risk_level'])}"
+            f"• {app['first_name'] or app['username']} | {name} | ID {lead_id} | {risk_badge(app['risk_level'])}"
         )
         buttons.append([
             InlineKeyboardButton(text=f"📄 #{app['id']}", callback_data=f"{CB_ADM}app:{app['id']}")
@@ -141,7 +142,10 @@ async def adm_high_risk_apps(callback: CallbackQuery) -> None:
     for app in items:
         from offers import get_offer
         o = get_offer(app["offer_id"])
-        lines.append(f"• {app['first_name']} | {o.name if o else app['offer_id']} | trust {app['trust_score']}")
+        lead_id = app.get("lead_sub1") or "—"
+        lines.append(
+            f"• {app['first_name']} | {o.name if o else app['offer_id']} | ID {lead_id} | trust {app['trust_score']}"
+        )
         buttons.append([InlineKeyboardButton(text=f"#{app['id']}", callback_data=f"{CB_ADM}app:{app['id']}")])
     nav = []
     if page > 0:

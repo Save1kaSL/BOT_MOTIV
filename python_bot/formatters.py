@@ -167,6 +167,7 @@ def format_admin_menu() -> str:
         "📊 Аналитика — ROI, деньги, конверсия\n"
         "📋 Заявки — фильтры, поиск, риски\n"
         "💳 Выплаты — журнал выплат\n"
+        "⚙️ Офферы — редактирование и добавление\n"
         "🔴 High risk — не рекомендовать быстрые выплаты\n"
         "Скрины: Одобрить / Написать"
     )
@@ -199,6 +200,7 @@ def format_admin_app(app: dict) -> str:
         f"📄 *Заявка #{app['id']}*\n",
         f"👤 {escape_markdown(name)} (@{escape_markdown(app.get('username') or '—')})",
         f"🆔 Telegram: `{app['telegram_id']}`",
+        f"🏷 Lead ID: `{app.get('lead_sub1') or '—'}`",
         f"🪪 ИП: {ip}",
         f"🏦 Банк: *{escape_markdown(bank)}*",
         f"📊 Статус: *{escape_markdown(format_status(app.get('status')))}*",

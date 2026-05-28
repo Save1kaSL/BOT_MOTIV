@@ -5,7 +5,7 @@ from aiogram.types import CallbackQuery
 from formatters import format_onboarding_pick, format_offer_card
 from keyboards import CB_IP, CB_PICK, CB_SKIP, offers_pick_keyboard, offer_detail_keyboard, reply_kb_for
 from offers import get_offer
-from storage import count_selected_offers, register_offer_selection, set_has_ip, set_onboarded
+from storage import count_selected_offers, register_offer_selection, set_has_ip, set_onboarded, toggle_offer_selection
 
 router = Router()
 
@@ -77,7 +77,7 @@ async def on_pick_offer(callback: CallbackQuery) -> None:
         return
 
     uid = callback.from_user.id
-    register_offer_selection(uid, offer_id)
+    toggle_offer_selection(uid, offer_id)
 
     # Мультивыбор: просто обновляем список с галочками.
     await callback.message.edit_text(

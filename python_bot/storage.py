@@ -257,6 +257,26 @@ def register_offer_selection(telegram_id: int, offer_id: str) -> None:
         )
 
 
+def toggle_offer_selection(telegram_id: int, offer_id: str) -> bool:
+    """
+    Переключает выбранность оффера на онбординге.
+    Возвращает True, если оффер стал выбран, иначе False.
+    """
+    app_id = ensure_user_offer(telegram_id, offer_id)
+    with _conn() as c:
+        row = c.execute(
+            "SELECT status FROM user_offers WHERE id = ?",
+            (app_id,),
+        ).fetchone()
+        is_selected = bool(row and row["status"] == "выбран")
+        new_status = "в_обработке" if is_selected else "выбран"
+        c.execute(
+            "UPDATE user_offers SET status = ? WHERE id = ?",
+            (new_status, app_id),
+        )
+        return new_status == "выбран"
+
+
 def get_offer_sub1(telegram_id: int, offer_id: str) -> str | None:
     row = None
     with _conn() as c:
@@ -540,7 +560,7 @@ def list_applications(page: int = 0, limit: int = 8, status: str | None = None) 
         total = c.execute(f"SELECT COUNT(*) FROM user_offers uo {where}", params).fetchone()[0]
         rows = c.execute(
             f"""
-            SELECT uo.id, uo.telegram_id, uo.offer_id, uo.status, uo.form_data, uo.current_step,
+            SELECT uo.id, uo.telegram_id, uo.offer_id, uo.status, uo.form_data, uo.current_step, uo.lead_sub1,
                    u.first_name, u.username, u.has_ip
             FROM user_offers uo
             JOIN users u ON u.telegram_id = uo.telegram_id
@@ -559,6 +579,7 @@ def list_applications(page: int = 0, limit: int = 8, status: str | None = None) 
             "status": r["status"],
             "form_data": json.loads(r["form_data"] or "{}"),
             "current_step": r["current_step"] or 0,
+            "lead_sub1": r["lead_sub1"],
             "first_name": r["first_name"],
             "username": r["username"],
             "has_ip": r["has_ip"],
@@ -570,7 +591,7 @@ def get_application(app_id: int) -> dict | None:
     with _conn() as c:
         r = c.execute(
             """
-            SELECT uo.id, uo.telegram_id, uo.offer_id, uo.status, uo.form_data, uo.current_step,
+            SELECT uo.id, uo.telegram_id, uo.offer_id, uo.status, uo.form_data, uo.current_step, uo.lead_sub1,
                    uo.progress_data, u.first_name, u.username, u.has_ip, u.hold_rub, u.paid_rub, u.available_to_withdraw_rub
             FROM user_offers uo
             JOIN users u ON u.telegram_id = uo.telegram_id
@@ -585,6 +606,7 @@ def get_application(app_id: int) -> dict | None:
         "telegram_id": r["telegram_id"],
         "offer_id": r["offer_id"],
         "status": r["status"],
+        "lead_sub1": r["lead_sub1"],
         "form_data": json.loads(r["form_data"] or "{}"),
         "current_step": r["current_step"] or 0,
         "progress_data": json.loads(r["progress_data"] or "{}"),

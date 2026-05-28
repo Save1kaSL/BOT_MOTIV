@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import json
 from pydantic import BaseModel, Field
 
+from config import DATA_DIR
 from offer_flow import FORM_OFFER_IDS
 
 SUPPORT_TEXT = (
@@ -304,6 +306,85 @@ try:
         )
 except Exception:
     pass
+
+
+OFFERS_OVERRIDES_PATH = DATA_DIR / "offers_overrides.json"
+
+
+def _load_offer_overrides() -> None:
+    if not OFFERS_OVERRIDES_PATH.exists():
+        return
+    try:
+        raw = json.loads(OFFERS_OVERRIDES_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    if not isinstance(raw, dict):
+        return
+    for offer_id, payload in raw.items():
+        if not isinstance(payload, dict):
+            continue
+        try:
+            OFFERS[offer_id] = RkoOffer(**payload)
+        except Exception:
+            continue
+
+
+def _save_offer_overrides() -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    payload = {offer_id: offer.model_dump() for offer_id, offer in OFFERS.items()}
+    OFFERS_OVERRIDES_PATH.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def upsert_offer(data: dict) -> RkoOffer:
+    """
+    Создаёт или обновляет оффер (полная запись).
+    Обязательные поля: id, name.
+    """
+    offer_id = (data.get("id") or "").strip()
+    if not offer_id:
+        raise ValueError("Нужен id оффера")
+
+    prev = OFFERS.get(offer_id)
+    base = prev.model_dump() if prev else {
+        "id": offer_id,
+        "name": data.get("name") or offer_id,
+        "payout": 1000,
+        "advance_payout": 500,
+        "safe_period_days": 30,
+        "description": "",
+        "cda_conditions": "",
+        "steps": ["Ссылка и инструкция", "Целевое действие (ЦД)"],
+        "critical_conditions": [],
+        "reject_reasons": [],
+        "referral_link": "",
+        "needs_form": offer_id in FORM_OFFER_IDS,
+        "category": "rko",
+    }
+
+    merged = {**base, **data, "id": offer_id}
+    offer = RkoOffer(**merged)
+    OFFERS[offer_id] = offer
+    _save_offer_overrides()
+    return offer
+
+
+def patch_offer(offer_id: str, patch: dict) -> RkoOffer:
+    existing = OFFERS.get(offer_id)
+    if not existing:
+        raise ValueError(f"Оффер `{offer_id}` не найден")
+    merged = existing.model_dump()
+    merged.update(patch)
+    merged["id"] = offer_id
+    offer = RkoOffer(**merged)
+    OFFERS[offer_id] = offer
+    _save_offer_overrides()
+    return offer
+
+
+_load_offer_overrides()
 
 
 def get_offer(offer_id: str) -> RkoOffer | None:

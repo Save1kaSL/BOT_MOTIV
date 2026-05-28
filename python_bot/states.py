@@ -43,3 +43,8 @@ class UserContact(StatesGroup):
 
 class UserSupport(StatesGroup):
     waiting_message = State()
+
+
+class AdminOffers(StatesGroup):
+    waiting_offer_id = State()
+    waiting_offer_payload = State()

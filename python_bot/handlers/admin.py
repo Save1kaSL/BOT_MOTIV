@@ -1,13 +1,15 @@
 """Админ-панель в Telegram."""
 
+import json
+
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 from config import is_admin
 from formatters import _money, format_admin_app, format_admin_menu, format_admin_stats
 from keyboards import CB_ADM, admin_menu_keyboard, main_reply_keyboard
-from offers import get_offer
+from offers import get_offer, list_offers, patch_offer, upsert_offer
 from formatters_payout import (
     format_approval_advance,
     format_approval_hold,
@@ -24,7 +26,7 @@ from storage import (
     update_submission_status,
     get_submission,
 )
-from states import AdminContact, PayoutDetails
+from states import AdminContact, AdminOffers, PayoutDetails
 from aiogram.fsm.context import FSMContext
 
 router = Router()
@@ -32,6 +34,17 @@ router = Router()
 
 def _guard(user_id: int | None) -> bool:
     return user_id is not None and is_admin(user_id)
+
+
+def _offers_editor_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📄 Список офферов", callback_data=f"{CB_ADM}offers:list")],
+            [InlineKeyboardButton(text="✏️ Изменить оффер", callback_data=f"{CB_ADM}offers:edit")],
+            [InlineKeyboardButton(text="➕ Добавить оффер", callback_data=f"{CB_ADM}offers:new")],
+            [InlineKeyboardButton(text="◀️ Админ", callback_data=f"{CB_ADM}menu")],
+        ]
+    )
 
 
 @router.message(Command("admin"))
@@ -58,6 +71,153 @@ async def adm_menu(callback: CallbackQuery) -> None:
             parse_mode="Markdown",
             reply_markup=admin_menu_keyboard(),
         )
+
+
+@router.callback_query(F.data == f"{CB_ADM}offers")
+async def adm_offers_editor(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
+    if not _guard(callback.from_user.id if callback.from_user else None):
+        return
+    await state.clear()
+    if callback.message:
+        await callback.message.edit_text(
+            "⚙️ *Редактор офферов*\n\n"
+            "Можно менять любые поля оффера: описание, ставку, ссылку, шаги и т.д.\n"
+            "Также можно добавить новый оффер.",
+            parse_mode="Markdown",
+            reply_markup=_offers_editor_kb(),
+        )
+
+
+@router.callback_query(F.data == f"{CB_ADM}offers:list")
+async def adm_offers_list(callback: CallbackQuery) -> None:
+    await callback.answer()
+    if not _guard(callback.from_user.id if callback.from_user else None):
+        return
+    offers = sorted(list_offers(), key=lambda o: (o.category, o.name))
+    lines = ["📄 *Офферы*:", ""]
+    for o in offers:
+        total = o.advance_payout + o.payout
+        lines.append(f"`{o.id}` — {o.name} [{o.category}] • {_money(total)} ₽")
+    if callback.message:
+        await callback.message.edit_text(
+            "\n".join(lines[:120]),
+            parse_mode="Markdown",
+            reply_markup=_offers_editor_kb(),
+        )
+
+
+@router.callback_query(F.data.in_([f"{CB_ADM}offers:edit", f"{CB_ADM}offers:new"]))
+async def adm_offers_choose_mode(callback: CallbackQuery, state: FSMContext) -> None:
+    await callback.answer()
+    if not _guard(callback.from_user.id if callback.from_user else None) or not callback.data:
+        return
+    mode = "new" if callback.data.endswith(":new") else "edit"
+    await state.set_state(AdminOffers.waiting_offer_id)
+    await state.update_data(offer_mode=mode)
+    msg = "Введи `id` нового оффера:" if mode == "new" else "Введи `id` оффера для редактирования:"
+    if callback.message:
+        await callback.message.answer(msg, parse_mode="Markdown")
+
+
+@router.message(AdminOffers.waiting_offer_id)
+async def adm_offers_offer_id(message: Message, state: FSMContext) -> None:
+    if not message.from_user or not _guard(message.from_user.id) or not message.text:
+        return
+    offer_id = message.text.strip()
+    data = await state.get_data()
+    mode = data.get("offer_mode", "edit")
+    existing = get_offer(offer_id)
+    if mode == "edit" and not existing:
+        await message.answer("Оффер не найден. Проверь id.")
+        return
+    if mode == "new" and existing:
+        await message.answer("Оффер с таким id уже есть. Выбери другой id.")
+        return
+
+    await state.update_data(offer_id=offer_id)
+    await state.set_state(AdminOffers.waiting_offer_payload)
+
+    if existing:
+        sample = {
+            "name": existing.name,
+            "category": existing.category,
+            "payout": existing.payout,
+            "advance_payout": existing.advance_payout,
+            "safe_period_days": existing.safe_period_days,
+            "referral_link": existing.referral_link,
+            "description": existing.description,
+            "cda_conditions": existing.cda_conditions,
+            "steps": existing.steps,
+            "critical_conditions": existing.critical_conditions,
+            "reject_reasons": existing.reject_reasons,
+            "needs_form": existing.needs_form,
+        }
+        hint = (
+            "Отправь JSON с полями, которые нужно изменить.\n"
+            "Пример (можно менять не всё):\n"
+            f"```json\n{json.dumps(sample, ensure_ascii=False, indent=2)}\n```"
+        )
+    else:
+        sample = {
+            "name": "Новый банк",
+            "category": "rko",
+            "payout": 1500,
+            "advance_payout": 500,
+            "safe_period_days": 30,
+            "referral_link": "https://example.com",
+            "description": "Описание оффера",
+            "cda_conditions": "Условия ЦД",
+            "steps": ["Шаг 1", "Шаг 2"],
+            "critical_conditions": ["Важно 1"],
+            "reject_reasons": ["Причина 1"],
+            "needs_form": False,
+        }
+        hint = (
+            "Отправь JSON с полями нового оффера:\n"
+            f"```json\n{json.dumps(sample, ensure_ascii=False, indent=2)}\n```"
+        )
+    await message.answer(hint)
+
+
+@router.message(AdminOffers.waiting_offer_payload)
+async def adm_offers_apply_payload(message: Message, state: FSMContext) -> None:
+    if not message.from_user or not _guard(message.from_user.id) or not message.text:
+        return
+    data = await state.get_data()
+    mode = data.get("offer_mode", "edit")
+    offer_id = data.get("offer_id")
+    if not offer_id:
+        await state.clear()
+        await message.answer("Сессия редактирования сброшена. Открой редактор заново.")
+        return
+
+    try:
+        payload = json.loads(message.text)
+        if not isinstance(payload, dict):
+            raise ValueError("JSON должен быть объектом")
+    except Exception as e:
+        await message.answer(f"Некорректный JSON: {e}")
+        return
+
+    try:
+        if mode == "new":
+            payload["id"] = offer_id
+            saved = upsert_offer(payload)
+        else:
+            saved = patch_offer(offer_id, payload)
+    except Exception as e:
+        await message.answer(f"Не удалось сохранить оффер: {e}")
+        return
+
+    await state.clear()
+    await message.answer(
+        f"✅ Оффер сохранён: `{saved.id}` — {saved.name}\n"
+        f"Ставка: {_money(saved.payout + saved.advance_payout)} ₽ (аванс {_money(saved.advance_payout)} ₽)\n"
+        f"Шагов: {len(saved.steps)}",
+        parse_mode="Markdown",
+        reply_markup=_offers_editor_kb(),
+    )
 
 
 @router.callback_query(F.data == f"{CB_ADM}stats")
@@ -117,7 +277,8 @@ async def adm_apps(callback: CallbackQuery) -> None:
         offer = get_offer(app["offer_id"])
         bank = offer.name if offer else app["offer_id"]
         name = app["first_name"] or app["username"] or str(app["telegram_id"])
-        lines.append(f"• {name} | {bank} | {app['status']}")
+        lead_id = app.get("lead_sub1") or "—"
+        lines.append(f"• {name} | {bank} | {app['status']} | ID {lead_id}")
         buttons.append([
             InlineKeyboardButton(
                 text=f"📄 {name[:18]}",

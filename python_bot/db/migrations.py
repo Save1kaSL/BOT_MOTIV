@@ -27,6 +27,7 @@ def _migrate_legacy(c) -> None:
         ("current_step", "ALTER TABLE user_offers ADD COLUMN current_step INTEGER DEFAULT 0"),
         ("progress_data", "ALTER TABLE user_offers ADD COLUMN progress_data TEXT DEFAULT '{}'"),
         ("hold_credited", "ALTER TABLE user_offers ADD COLUMN hold_credited INTEGER DEFAULT 0"),
+        ("lead_sub1", "ALTER TABLE user_offers ADD COLUMN lead_sub1 TEXT"),
         ("pipeline_stage", "ALTER TABLE user_offers ADD COLUMN pipeline_stage TEXT DEFAULT 'new_lead'"),
         ("approved_at", "ALTER TABLE user_offers ADD COLUMN approved_at TEXT"),
         ("revenue_rub", "ALTER TABLE user_offers ADD COLUMN revenue_rub INTEGER DEFAULT 0"),
@@ -85,6 +86,7 @@ def run_migrations() -> None:
                 current_step INTEGER DEFAULT 0,
                 progress_data TEXT DEFAULT '{}',
                 hold_credited INTEGER DEFAULT 0,
+                lead_sub1 TEXT,
                 approved_at TEXT,
                 revenue_rub INTEGER DEFAULT 0,
                 UNIQUE(telegram_id, offer_id)

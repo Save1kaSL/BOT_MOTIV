@@ -91,6 +91,7 @@ def admin_menu_keyboard() -> InlineKeyboardMarkup:
                 InlineKeyboardButton(text="💸 Выплаты (запросы)", callback_data=f"{CB_ADM}payreq:0"),
                 InlineKeyboardButton(text="🗄 Выгрузка БД", callback_data=f"{CB_ADM}dbexp"),
             ],
+            [InlineKeyboardButton(text="⚙️ Офферы (редактор)", callback_data=f"{CB_ADM}offers")],
             [InlineKeyboardButton(text="✏️ Изменить hold/доступно", callback_data=f"{CB_ADM}holdedit")],
             [InlineKeyboardButton(text="🔴 High risk", callback_data=f"{CB_ADM}apps:risk:0")],
             [InlineKeyboardButton(text="👥 Пользователи", callback_data=f"{CB_ADM}users:0")],
